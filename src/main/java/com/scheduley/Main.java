@@ -1,11 +1,14 @@
 package com.scheduley;
+import com.scheduley.db.ConnectDB;
 
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
+import java.sql.*;
+
 public class Main {
     public static void main(String[] args) {
-        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-        // to see how IntelliJ IDEA suggests fixing it.
+        ConnectDB db = new ConnectDB();
+        Connection connection = db.getConnection();
+
+
 
     }
 }
