@@ -6,7 +6,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class ConnectDB {
-    private static final String URL = "jdbc:sqlite:database.db";
+    private static final String URL = "jdbc:sqlite:scheduley.db";
 
     // Returns a NEW connection each call (callers close it via try-with-resources)
     public static Connection getConnection() throws SQLException {

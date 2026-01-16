@@ -2,6 +2,7 @@ package com.scheduley.db;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.SQLOutput;
 import java.sql.Statement;
 
 /**
@@ -10,27 +11,34 @@ import java.sql.Statement;
  */
 public class Migrations {
 
+
+
+    private static final String CREATE_TABLE_COURSE = """
+            CREATE TABLE IF NOT EXISTS course (
+              id         INTEGER PRIMARY KEY AUTOINCREMENT,
+              code       TEXT    NOT NULL UNIQUE,
+              name       TEXT    NOT NULL,
+              credits    INTEGER NOT NULL,
+              colour_hex TEXT    DEFAULT '#2196F3'
+            );
+            """;
+    private static final String Course_Seed_1 = """
+            INSERT or IGNORE INTO course(code, name,credits,colour_hex)
+            VALUES ('SC1000', 'Example Course 1', 3, '#00A86B');
+    """;
+
+  /*  private static final String CREATE_TABLE_WORKSHIFT = """
+            CREATE TABLE IF NOT EXISTS workshift (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            """ */
+
+
+
+    //This method will be called at startup
     public static void init() {
-        // DDL for your first table: COURSES
-        final String createCourses = """
-            CREATE TABLE IF NOT EXISTS courses (
-                id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                code        TEXT NOT NULL,
-                name        TEXT NOT NULL,
-                location    TEXT,
-                day_of_week INTEGER NOT NULL,
-                start_time  TEXT NOT NULL,
-                end_time    TEXT NOT NULL,
-                colour_hex   TEXT DEFAULT '#2196F3',
-                created_at  TEXT DEFAULT (datetime('now')),
-                updated_at  TEXT DEFAULT (datetime('now'))
-              );
-        """;
 
-        // If you later add more tables, put more CREATE TABLE statements here.
-        // final String createWorkShifts = "...";
-        // final String createTasks = "...";
-
+        // IMPORTANT: try-with-resources auto closes everything
         // Open a connection, enable foreign keys, run the statements, close.
         try (Connection conn = ConnectDB.getConnection();
              Statement st = conn.createStatement()) {
@@ -38,10 +46,15 @@ public class Migrations {
             // Good practice for SQLite to enforce FK constraints.
             st.execute("PRAGMA foreign_keys = ON");
 
-            st.execute(createCourses);
-            // st.execute(createWorkShifts);
-            // st.execute(createTasks);
+            // Create Table(s)
+            st.executeUpdate(CREATE_TABLE_COURSE);
 
+
+            // Optional: Seed rows (safe to run multiple times)
+            st.executeUpdate(Course_Seed_1);
+
+
+            System.out.println("Schema initialized");
         } catch (SQLException e) {
             throw new RuntimeException("Database migration failed", e);
         }
