@@ -26,18 +26,21 @@ public class Migrations {
 
     private static final String CREATE_TABLE_TIMEBLOCK = """
             CREATE TABLE IF NOT EXISTS time_block (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              title TEXT NOT NULL,
-              category TEXT NOT NULL,
-              course_id INTEGER,
-              day_of_week INTEGER NOT NULL CHECK(day_of_week BETWEEN 1 AND 7),
-              start_min INTEGER NOT NULL CHECK(start_min BETWEEN 0 AND 1439),
-              end_min INTEGER NOT NULL CHECK(end_min BETWEEN 1 AND 1440),
-              notes TEXT,
-              FOREIGN KEY(course_id) REFERENCES course(id) ON DELETE CASCADE,
-              CHECK(end_min > start_min)
-            );
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                category TEXT NOT NULL,
+                course_id INTEGER,
             
+                day_of_week INTEGER NOT NULL CHECK(day_of_week BETWEEN 1 AND 7),
+                start_min INTEGER NOT NULL CHECK(start_min BETWEEN 0 AND 1439),
+                end_min INTEGER NOT NULL CHECK(end_min BETWEEN 1 AND 1440),
+            
+                notes TEXT,
+                colour_hex TEXT DEFAULT '#2596be',
+            
+                CHECK(end_min > start_min),
+                FOREIGN KEY(course_id) REFERENCES course(id) ON DELETE CASCADE
+            );
     """;
 
     // SEEDS
@@ -49,8 +52,8 @@ public class Migrations {
 
     private static final String TimeBlock_Seed_1 = """
             INSERT or IGNORE INTO time_block(title, category, day_of_week,
-            start_min, end_min, notes) VALUES ('Hobby 1', 'Hobby', 1, 780, 840, 
-            'Doing hobby 1 from 1:00 pm to 2:00 pm');
+            start_min, end_min, notes, colour_hex) VALUES ('Hobby 1', 'Hobby', 1, 780, 840, 
+            'Doing hobby 1 from 1:00 pm to 2:00 pm', '#2596be');
             """;
 
 

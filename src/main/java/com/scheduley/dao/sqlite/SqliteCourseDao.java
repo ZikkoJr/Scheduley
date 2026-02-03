@@ -38,7 +38,7 @@ public class SqliteCourseDao implements CourseDAO {
             ps.setString(1, course.getCode());
             ps.setString(2, course.getName());
             ps.setInt(3, course.getCredits());
-            ps.setString(4, course.getColour_hex());
+            ps.setString(4, course.getColourHex());
 
             int rows = ps.executeUpdate();
             if (rows != 1) throw new SQLException("Insert failed, rows affected: " + rows);
@@ -130,7 +130,7 @@ public class SqliteCourseDao implements CourseDAO {
             ps.setString(1, course.getCode());
             ps.setString(2, course.getName());
             ps.setInt(3, course.getCredits());
-            ps.setString(4, course.getColour_hex());
+            ps.setString(4, course.getColourHex());
             ps.setLong(5, course.getId());
 
             return ps.executeUpdate() == 1;
@@ -164,8 +164,8 @@ public class SqliteCourseDao implements CourseDAO {
         String code = rs.getString("code");
         String name = rs.getString("name");
         int credits = rs.getInt("credits");
-        String colour_hex = rs.getString("colour_hex");
-        return new Course(id, code, name, credits, colour_hex);
+        String colourHex = rs.getString("colour_hex");
+        return new Course(id, code, name, credits, colourHex);
     }
 
 

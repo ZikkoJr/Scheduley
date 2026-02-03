@@ -4,21 +4,21 @@ public class Course {
 
     private Long id;
     private String code, name;
-    private String colour_hex = "#00A86B";
+    private String colourHex = "#00A86B";
     private int credits;
 
 
     //constructor for new course before insert
-    public Course(String code, String name, int credits, String colour_hex) {
-        this(null, code, name, credits, colour_hex);
+    public Course(String code, String name, int credits, String colourHex) {
+        this(null, code, name, credits, colourHex);
     }
 
     //Constructor for existing course from db
-    public Course(Long id, String code, String name, int credits, String colour_hex) {
+    public Course(Long id, String code, String name, int credits, String colourHex) {
         this.id = id;
         this.code = code;
         this.name = name;
-        this.colour_hex = colour_hex;
+        this.colourHex = colourHex;
         this.credits = credits;
     }
 
@@ -52,11 +52,11 @@ public class Course {
         this.credits = credits;
     }
 
-    public String getColour_hex() {
-        return colour_hex;
+    public String getColourHex() {
+        return colourHex;
     }
-    public void setColour_hex(String colour_hex) {
-        this.colour_hex = colour_hex;
+    public void setColourHex(String colour_hex) {
+        this.colourHex = colour_hex;
     }
 
 
@@ -67,7 +67,7 @@ public class Course {
                 + ", code=" + code
                 + ", name=" + name
                 + ", credits=" + credits
-                + ", colour_he=" + colour_hex + '}';
+                + ", colour_hex=" + colourHex + '}';
     }
 
 

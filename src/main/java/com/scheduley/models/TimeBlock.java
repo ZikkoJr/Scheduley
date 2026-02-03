@@ -1,31 +1,33 @@
 package com.scheduley.models;
 
 public class TimeBlock {
-    private Long id, courseId;
+    private Long id;
     private String title;
     private BlockCategory category; //enum
-    private Long getCourseId;
+    private Long courseId;
     private int dayOfWeek;
     private int startMin;
     private int endMin;
     private String notes;
+    private String colourHex = "#2596be";
 
     // Constructor for initial creation (no id)
-    public TimeBlock(String title, BlockCategory category, Long getCourseId,
-                     int dayOfWeek, int startMin, int endMin, String notes) {
+    public TimeBlock(String title, BlockCategory category, Long courseId,
+                     int dayOfWeek, int startMin, int endMin, String notes,  String colourHex) {
         this.title = title;
         this.category = category;
-        this.getCourseId = getCourseId;
+        this.courseId = courseId;
         this.dayOfWeek = dayOfWeek;
         this.startMin = startMin;
         this.endMin = endMin;
         this.notes = notes;
+        this.colourHex = colourHex;
     }
 
     // Constructor for existing Timeblock entity
-    public TimeBlock(Long id,String title, BlockCategory category, Long getCourseId,
-                     int dayOfWeek, int startMin, int endMin, String notes){
-        this(title,category,getCourseId,dayOfWeek,startMin,endMin,notes);
+    public TimeBlock(Long id,String title, BlockCategory category, Long courseId,
+                     int dayOfWeek, int startMin, int endMin, String notes,  String colourHex) {
+        this(title,category,courseId,dayOfWeek,startMin,endMin,notes, colourHex);
         this.id = id;
     }
 
@@ -85,5 +87,14 @@ public class TimeBlock {
     public void setNotes(String notes) {
         this.notes = notes;
     }
+
+    public String getColourHex() {
+        return colourHex;
+    }
+    public void setColourHex(String colourHex) {
+        this.colourHex = colourHex;
+    }
+
+
 
 }

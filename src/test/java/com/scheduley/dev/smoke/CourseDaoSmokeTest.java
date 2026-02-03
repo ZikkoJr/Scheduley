@@ -53,7 +53,7 @@ public class CourseDaoSmokeTest {
         // 8) UPDATE
         created.setName("Database Systems (Updated)");
         created.setCredits(4);
-        created.setColour_hex("#2196F3");
+        created.setColourHex("#2196F3");
 
         boolean updated = dao.update(created);
         require(updated, "Update failed: dao.update returned false.");

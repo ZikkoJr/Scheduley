@@ -18,18 +18,18 @@ public class SqliteTimeBlockDao implements TimeBlockDAO {
 
     // Fields: SQL strings
     String SQL_Create = "INSERT INTO time_block(title, category, course_id, day_of_week," +
-            "            start_min, end_min, notes) VALUES (?, ?, ?, ?, ?, ?, ?)";
-    String SQL_GetById = "SELECT id, title, category, course_id, day_of_week, start_min, end_min, notes FROM time_block WHERE id = ?";
+            "            start_min, end_min, notes, colour_hex) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    String SQL_GetById = "SELECT id, title, category, course_id, day_of_week, start_min, end_min, notes, colour_hex FROM time_block WHERE id = ?";
     String SQL_GetAll = "SELECT id, title, category, course_id, day_of_week, start_min, end_min,"+
-            "            notes FROM time_block ORDER BY day_of_week, start_min";
+            "            notes, colour_hex FROM time_block ORDER BY day_of_week, start_min";
     String SQL_GetByDay = "SELECT id, title, category, course_id, day_of_week, start_min, end_min," +
-            "              notes FROM time_block WHERE day_of_week = ? ORDER BY start_min";
+            "              notes, colour_hex FROM time_block WHERE day_of_week = ? ORDER BY start_min";
     String SQL_GetByCourseId = "SELECT id, title, category, course_id, day_of_week, start_min, end_min," +
-            "              notes FROM time_block WHERE course_id = ? ORDER BY day_of_week, start_min";
+            "              notes, colour_hex FROM time_block WHERE course_id = ? ORDER BY day_of_week, start_min";
     String SQL_GetByCategory = "SELECT id, title, category, course_id, day_of_week, start_min, end_min," +
-            "              notes FROM time_block WHERE category = ? ORDER BY day_of_week, start_min";
+            "              notes, colour_hex FROM time_block WHERE category = ? ORDER BY day_of_week, start_min";
     String SQL_Update = "UPDATE time_block SET title = ?, category = ?, course_id = ?, day_of_week = ?,"
-        +"               start_min = ?, end_min = ?, notes = ? WHERE id = ?";
+        +"               start_min = ?, end_min = ?, notes = ?, colour_hex = ? WHERE id = ?";
     String SQL_Delete = "DELETE FROM time_block WHERE id = ?";
 
     //Constructor:
@@ -58,6 +58,7 @@ public class SqliteTimeBlockDao implements TimeBlockDAO {
             ps.setInt(5, block.getStartMin());
             ps.setInt(6, block.getEndMin());
             ps.setString(7, block.getNotes());
+            ps.setString(8, block.getColourHex());
 
             int rows = ps.executeUpdate();
             if (rows != 1) throw new SQLException("Insert failed, rows affected: " + rows);
@@ -210,7 +211,8 @@ public class SqliteTimeBlockDao implements TimeBlockDAO {
             ps.setInt(5, block.getStartMin());
             ps.setInt(6, block.getEndMin());
             ps.setString(7, block.getNotes());
-            ps.setLong(8, block.getId());
+            ps.setString(8, block.getColourHex());
+            ps.setLong(9, block.getId());
 
             return ps.executeUpdate() == 1;
 
@@ -245,15 +247,21 @@ public class SqliteTimeBlockDao implements TimeBlockDAO {
 
         BlockCategory category = BlockCategory.valueOf(rs.getString("category"));
 
-        Long courseId = (Long) rs.getObject("course_id"); // null-safe
+        Object obj = rs.getObject("course_id");
+        Long courseId = null;
+        if (obj instanceof Number n) {
+            courseId = n.longValue();
+        }
+
 
         int dayOfWeek = rs.getInt("day_of_week");
         int startMin = rs.getInt("start_min");
         int endMin = rs.getInt("end_min");
 
         String notes = rs.getString("notes"); // rs.getString returns null if NULL
+        String colourHex = rs.getString("colour_hex");
 
-        return new TimeBlock(id, title, category, courseId, dayOfWeek, startMin, endMin, notes);
+        return new TimeBlock(id, title, category, courseId, dayOfWeek, startMin, endMin, notes, colourHex);
     }
 
 
