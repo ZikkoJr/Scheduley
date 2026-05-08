@@ -131,7 +131,7 @@ Near-term improvements:
 - Import/export
 - Short demo GIF
 
-Features I plan on adding:
+## Resume Highlights
 
 - Login and user accounts
 - Cloud sync
