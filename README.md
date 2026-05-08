@@ -131,7 +131,7 @@ Near-term improvements:
 - Import/export
 - Short demo GIF
 
-Out of scope for the current MVP:
+Features I plan on adding:
 
 - Login and user accounts
 - Cloud sync
@@ -141,9 +141,3 @@ Out of scope for the current MVP:
 - Notifications/reminders
 - Mobile or web support
 
-## Resume Highlights
-
-- Built a JavaFX desktop scheduling application with SQLite-backed local persistence.
-- Implemented DAO-based data access and separated UI, business logic, and persistence responsibilities.
-- Designed CRUD workflows for courses, tasks, and time blocks with validation and conflict detection.
-- Created database migrations for courses, tasks, time blocks, settings, constraints, and foreign-key relationships.
