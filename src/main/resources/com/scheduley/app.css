@@ -1,0 +1,234 @@
+.theme-light {
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+    -app-bg: #f7f8fb;
+    -app-surface: #ffffff;
+    -app-surface-alt: #f1f5f9;
+    -app-border: #e5e7eb;
+    -app-grid: #eef0f4;
+    -app-text: #111827;
+    -app-muted: #5f6673;
+    -app-control: #ffffff;
+    -app-control-hover: #f3f4f6;
+    -app-accent: #2563eb;
+    -app-danger: #b91c1c;
+    -app-selection: #dbeafe;
+}
+
+.theme-dark {
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+    -app-bg: #0f172a;
+    -app-surface: #111827;
+    -app-surface-alt: #1f2937;
+    -app-border: #334155;
+    -app-grid: #273449;
+    -app-text: #e5e7eb;
+    -app-muted: #a6b0c3;
+    -app-control: #1f2937;
+    -app-control-hover: #273449;
+    -app-accent: #60a5fa;
+    -app-danger: #f87171;
+    -app-selection: #1e3a5f;
+}
+
+.app-root,
+.content-view,
+.dialog-pane {
+    -fx-background-color: -app-bg;
+}
+
+.app-header {
+    -fx-background-color: -app-bg;
+}
+
+.app-title,
+.section-title,
+.label,
+.tab-label,
+.table-view,
+.dialog-pane .header-panel .label,
+.dialog-pane .content.label {
+    -fx-text-fill: -app-text;
+}
+
+.app-subtitle,
+.muted-label,
+.hour-label {
+    -fx-text-fill: -app-muted;
+}
+
+.section-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: 700;
+}
+
+.app-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: 700;
+}
+
+.conflict-summary {
+    -fx-text-fill: -app-danger;
+    -fx-font-weight: 700;
+}
+
+.button {
+    -fx-background-color: -app-control;
+    -fx-border-color: -app-border;
+    -fx-text-fill: -app-text;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-padding: 6 12;
+}
+
+.button:hover {
+    -fx-background-color: -app-control-hover;
+}
+
+.text-field,
+.text-area,
+.combo-box-base,
+.spinner,
+.date-picker {
+    -fx-background-color: -app-control;
+    -fx-border-color: -app-border;
+    -fx-text-fill: -app-text;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+}
+
+.text-input,
+.text-area .content,
+.combo-box .list-cell,
+.spinner .text-field,
+.date-picker .text-field {
+    -fx-background-color: -app-control;
+    -fx-text-fill: -app-text;
+}
+
+.context-menu,
+.combo-box-popup .list-view,
+.date-picker-popup {
+    -fx-background-color: -app-surface;
+    -fx-border-color: -app-border;
+}
+
+.combo-box-popup .list-view .list-cell {
+    -fx-background-color: -app-surface;
+    -fx-text-fill: -app-text;
+}
+
+.combo-box-popup .list-view .list-cell:hover,
+.combo-box-popup .list-view .list-cell:selected {
+    -fx-background-color: -app-selection;
+}
+
+.tab-pane {
+    -fx-background-color: -app-bg;
+}
+
+.tab-pane .tab-header-area .tab-header-background {
+    -fx-background-color: -app-bg;
+}
+
+.tab-pane .tab {
+    -fx-background-color: -app-surface-alt;
+    -fx-border-color: -app-border;
+}
+
+.tab-pane .tab:selected {
+    -fx-background-color: -app-surface;
+}
+
+.table-view {
+    -fx-background-color: -app-surface;
+    -fx-control-inner-background: -app-surface;
+    -fx-table-cell-border-color: -app-border;
+    -fx-border-color: -app-border;
+}
+
+.table-view .column-header,
+.table-view .column-header-background,
+.table-view .filler {
+    -fx-background-color: -app-surface-alt;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: -app-text;
+}
+
+.table-row-cell,
+.table-cell {
+    -fx-background-color: -app-surface;
+    -fx-text-fill: -app-text;
+    -fx-border-color: transparent transparent -app-border transparent;
+}
+
+.table-row-cell:selected,
+.table-row-cell:selected .table-cell {
+    -fx-background-color: -app-selection;
+}
+
+.scroll-pane,
+.scroll-pane > .viewport {
+    -fx-background-color: -app-surface;
+}
+
+.calendar-container {
+    -fx-background-color: -app-surface;
+}
+
+.calendar-day-pane {
+    -fx-background-color: -app-surface;
+    -fx-border-color: -app-border;
+    -fx-border-width: 0 1 0 0;
+}
+
+.calendar-header {
+    -fx-background-color: -app-surface-alt;
+    -fx-border-color: -app-border;
+    -fx-font-weight: 700;
+    -fx-text-fill: -app-text;
+}
+
+.calendar-grid-line {
+    -fx-background-color: -app-grid;
+}
+
+.day-date-label {
+    -fx-text-fill: -app-muted;
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+}
+
+.day-sidebar {
+    -fx-background-color: -app-surface;
+    -fx-border-color: -app-border;
+    -fx-border-width: 1;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-padding: 14;
+}
+
+.now-card,
+.upcoming-card {
+    -fx-background-color: -app-surface-alt;
+    -fx-border-color: -app-border;
+    -fx-text-fill: -app-text;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-padding: 10;
+    -fx-font-weight: 600;
+}
+
+.current-time-line {
+    -fx-background-color: -app-danger;
+}
+
+.current-time-marker {
+    -fx-background-color: -app-danger;
+    -fx-text-fill: white;
+    -fx-background-radius: 10;
+    -fx-padding: 2 8;
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+}

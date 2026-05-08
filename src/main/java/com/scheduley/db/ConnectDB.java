@@ -6,12 +6,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class ConnectDB {
-    private static final String URL = "jdbc:sqlite:scheduley.db";
+    private static final String DEFAULT_DB_PATH = "scheduley.db";
 
-    // Returns a NEW connection each call (callers close it via try-with-resources)
     public static Connection getConnection() throws SQLException {
-        Connection conn = DriverManager.getConnection(URL);
-        // Enforce foreign keys for SQLite every time we open a connection
+        String dbPath = System.getProperty("scheduley.db.path", DEFAULT_DB_PATH);
+        Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
         try (Statement st = conn.createStatement()) {
             st.execute("PRAGMA foreign_keys = ON");
         }
