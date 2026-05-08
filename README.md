@@ -131,7 +131,7 @@ Near-term improvements:
 - Import/export
 - Short demo GIF
 
-## Resume Highlights
+Out of scope for the current MVP:
 
 - Login and user accounts
 - Cloud sync
@@ -140,4 +140,12 @@ Near-term improvements:
 - Google Calendar integration
 - Notifications/reminders
 - Mobile or web support
+
+## Resume Highlights
+
+- Built a JavaFX desktop scheduling application with SQLite-backed local persistence.
+- Implemented DAO-based data access and separated UI, business logic, and persistence responsibilities.
+- Designed CRUD workflows for courses, tasks, and time blocks with validation and conflict detection.
+- Created database migrations for courses, tasks, time blocks, settings, constraints, and foreign-key relationships.
+
 
