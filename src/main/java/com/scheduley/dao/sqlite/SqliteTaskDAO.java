@@ -16,8 +16,8 @@ import java.util.Optional;
 
 public class SqliteTaskDAO implements TaskDAO {
     private static final String SQL_CREATE = """
-            INSERT INTO task(title, course_id, due_date, estimated_minutes, priority, status, notes, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO task(schedule_profile_id, title, course_id, due_date, estimated_minutes, priority, status, notes, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """;
     private static final String SQL_SELECT = """
             SELECT id, title, course_id, due_date, estimated_minutes, priority, status, notes, created_at, updated_at
@@ -27,17 +27,19 @@ public class SqliteTaskDAO implements TaskDAO {
             UPDATE task
             SET title = ?, course_id = ?, due_date = ?, estimated_minutes = ?, priority = ?, status = ?,
                 notes = ?, updated_at = ?
-            WHERE id = ?
+            WHERE id = ? AND schedule_profile_id = ?
             """;
 
     @Override
-    public Task create(Task task) {
+    public Task create(Task task, Long scheduleProfileId) {
+        requireProfileId(scheduleProfileId);
         String now = LocalDateTime.now().toString();
         try (Connection conn = ConnectDB.getConnection();
              PreparedStatement ps = conn.prepareStatement(SQL_CREATE, Statement.RETURN_GENERATED_KEYS)) {
-            bindEditable(ps, task);
-            ps.setString(8, now);
+            ps.setLong(1, scheduleProfileId);
+            bindEditable(ps, task, 2);
             ps.setString(9, now);
+            ps.setString(10, now);
             int rows = ps.executeUpdate();
             if (rows != 1) throw new SQLException("Insert failed, rows affected: " + rows);
             try (ResultSet keys = ps.getGeneratedKeys()) {
@@ -55,10 +57,12 @@ public class SqliteTaskDAO implements TaskDAO {
     }
 
     @Override
-    public Optional<Task> findById(Long id) {
+    public Optional<Task> findById(Long id, Long scheduleProfileId) {
+        requireProfileId(scheduleProfileId);
         try (Connection conn = ConnectDB.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_SELECT + " WHERE id = ?")) {
+             PreparedStatement ps = conn.prepareStatement(SQL_SELECT + " WHERE id = ? AND schedule_profile_id = ?")) {
             ps.setLong(1, id);
+            ps.setLong(2, scheduleProfileId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return Optional.of(map(rs));
                 return Optional.empty();
@@ -69,36 +73,39 @@ public class SqliteTaskDAO implements TaskDAO {
     }
 
     @Override
-    public List<Task> findAll() {
+    public List<Task> findAll(Long scheduleProfileId) {
         return query(SQL_SELECT + """
+                WHERE schedule_profile_id = ?
                 ORDER BY
                   CASE WHEN due_date IS NULL OR due_date = '' THEN 1 ELSE 0 END,
                   due_date,
                   id DESC
-                """, null);
+                """, scheduleProfileId);
     }
 
     @Override
-    public List<Task> findByStatus(String status) {
-        return query(SQL_SELECT + " WHERE status = ? ORDER BY due_date, id DESC", status);
+    public List<Task> findByStatus(String status, Long scheduleProfileId) {
+        return query(SQL_SELECT + " WHERE status = ? AND schedule_profile_id = ? ORDER BY due_date, id DESC", status, scheduleProfileId);
     }
 
     @Override
-    public List<Task> findByCourseId(Long courseId) {
-        return query(SQL_SELECT + " WHERE course_id = ? ORDER BY due_date, id DESC", courseId);
+    public List<Task> findByCourseId(Long courseId, Long scheduleProfileId) {
+        return query(SQL_SELECT + " WHERE course_id = ? AND schedule_profile_id = ? ORDER BY due_date, id DESC", courseId, scheduleProfileId);
     }
 
     @Override
-    public boolean update(Task task) {
+    public boolean update(Task task, Long scheduleProfileId) {
+        requireProfileId(scheduleProfileId);
         if (task.getId() == null) {
             throw new IllegalArgumentException("Task id is null. Can't update.");
         }
         String now = LocalDateTime.now().toString();
         try (Connection conn = ConnectDB.getConnection();
              PreparedStatement ps = conn.prepareStatement(SQL_UPDATE)) {
-            bindEditable(ps, task);
+            bindEditable(ps, task, 1);
             ps.setString(8, now);
             ps.setLong(9, task.getId());
+            ps.setLong(10, scheduleProfileId);
             task.setUpdatedAt(now);
             return ps.executeUpdate() == 1;
         } catch (SQLException e) {
@@ -107,27 +114,34 @@ public class SqliteTaskDAO implements TaskDAO {
     }
 
     @Override
-    public boolean deleteById(Long id) {
+    public boolean deleteById(Long id, Long scheduleProfileId) {
+        requireProfileId(scheduleProfileId);
         if (id == null) {
             throw new IllegalArgumentException("Task id is null. Can't delete.");
         }
         try (Connection conn = ConnectDB.getConnection();
-             PreparedStatement ps = conn.prepareStatement("DELETE FROM task WHERE id = ?")) {
+             PreparedStatement ps = conn.prepareStatement("DELETE FROM task WHERE id = ? AND schedule_profile_id = ?")) {
             ps.setLong(1, id);
+            ps.setLong(2, scheduleProfileId);
             return ps.executeUpdate() == 1;
         } catch (SQLException e) {
             throw new RuntimeException("Failed to delete task id: " + id, e);
         }
     }
 
-    private List<Task> query(String sql, Object param) {
+    private List<Task> query(String sql, Object... params) {
         List<Task> tasks = new ArrayList<>();
         try (Connection conn = ConnectDB.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            if (param instanceof String value) {
-                ps.setString(1, value);
-            } else if (param instanceof Long value) {
-                ps.setLong(1, value);
+            for (int i = 0; i < params.length; i++) {
+                Object param = params[i];
+                if (param instanceof String value) {
+                    ps.setString(i + 1, value);
+                } else if (param instanceof Long value) {
+                    ps.setLong(i + 1, value);
+                } else {
+                    throw new IllegalArgumentException("Unsupported SQL parameter: " + param);
+                }
             }
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -140,14 +154,14 @@ public class SqliteTaskDAO implements TaskDAO {
         }
     }
 
-    private void bindEditable(PreparedStatement ps, Task task) throws SQLException {
-        ps.setString(1, task.getTitle());
-        setNullableLong(ps, 2, task.getCourseId());
-        ps.setString(3, blankToNull(task.getDueDate()));
-        setNullableInt(ps, 4, task.getEstimatedMinutes());
-        ps.setString(5, task.getPriority());
-        ps.setString(6, task.getStatus());
-        ps.setString(7, task.getNotes());
+    private void bindEditable(PreparedStatement ps, Task task, int startIndex) throws SQLException {
+        ps.setString(startIndex, task.getTitle());
+        setNullableLong(ps, startIndex + 1, task.getCourseId());
+        ps.setString(startIndex + 2, blankToNull(task.getDueDate()));
+        setNullableInt(ps, startIndex + 3, task.getEstimatedMinutes());
+        ps.setString(startIndex + 4, task.getPriority());
+        ps.setString(startIndex + 5, task.getStatus());
+        ps.setString(startIndex + 6, task.getNotes());
     }
 
     private Task map(ResultSet rs) throws SQLException {
@@ -187,5 +201,11 @@ public class SqliteTaskDAO implements TaskDAO {
 
     private static String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value;
+    }
+
+    private static void requireProfileId(Long scheduleProfileId) {
+        if (scheduleProfileId == null) {
+            throw new IllegalStateException("No active schedule profile is selected.");
+        }
     }
 }
