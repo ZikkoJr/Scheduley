@@ -9,6 +9,7 @@ public class Migrations {
     private static final String CREATE_TABLE_COURSE = """
             CREATE TABLE IF NOT EXISTS course (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                schedule_profile_id INTEGER,
                 code TEXT NOT NULL,
                 name TEXT NOT NULL,
                 instructor TEXT,
@@ -16,13 +17,15 @@ public class Migrations {
                 color_hex TEXT,
                 notes TEXT,
                 created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY (schedule_profile_id) REFERENCES schedule_profile(id) ON DELETE CASCADE
             );
             """;
 
     private static final String CREATE_TABLE_TASK = """
             CREATE TABLE IF NOT EXISTS task (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                schedule_profile_id INTEGER,
                 title TEXT NOT NULL,
                 course_id INTEGER,
                 due_date TEXT,
@@ -32,6 +35,7 @@ public class Migrations {
                 notes TEXT,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL,
+                FOREIGN KEY (schedule_profile_id) REFERENCES schedule_profile(id) ON DELETE CASCADE,
                 FOREIGN KEY (course_id) REFERENCES course(id) ON DELETE SET NULL
             );
             """;
@@ -39,6 +43,7 @@ public class Migrations {
     private static final String CREATE_TABLE_TIME_BLOCK = """
             CREATE TABLE IF NOT EXISTS time_block (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                schedule_profile_id INTEGER,
                 title TEXT NOT NULL,
                 block_type TEXT NOT NULL,
                 course_id INTEGER,
@@ -52,12 +57,24 @@ public class Migrations {
                 notes TEXT,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL,
+                FOREIGN KEY (schedule_profile_id) REFERENCES schedule_profile(id) ON DELETE CASCADE,
                 FOREIGN KEY (course_id) REFERENCES course(id) ON DELETE CASCADE,
                 FOREIGN KEY (task_id) REFERENCES task(id) ON DELETE SET NULL,
                 CHECK (start_minute >= 0 AND start_minute < 1440),
                 CHECK (end_minute > 0 AND end_minute <= 1440),
                 CHECK (end_minute > start_minute),
                 CHECK (day_of_week IS NULL OR day_of_week BETWEEN 1 AND 7)
+            );
+            """;
+
+    private static final String CREATE_TABLE_SCHEDULE_PROFILE = """
+            CREATE TABLE IF NOT EXISTS schedule_profile (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                description TEXT,
+                is_active INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
             );
             """;
 
@@ -75,10 +92,12 @@ public class Migrations {
         try (Connection conn = ConnectDB.getConnection();
              Statement st = conn.createStatement()) {
             st.execute("PRAGMA foreign_keys = ON");
+            st.executeUpdate(CREATE_TABLE_SCHEDULE_PROFILE);
             st.executeUpdate(CREATE_TABLE_COURSE);
             migrateLegacyCourseTable(conn);
             st.executeUpdate(CREATE_TABLE_TASK);
             st.executeUpdate(CREATE_TABLE_TIME_BLOCK);
+            migrateScheduleProfiles(conn);
             st.executeUpdate(CREATE_TABLE_SETTINGS);
             st.executeUpdate("""
                     INSERT OR IGNORE INTO app_settings
@@ -87,6 +106,71 @@ public class Migrations {
                     """);
         } catch (SQLException e) {
             throw new RuntimeException("Database migration failed", e);
+        }
+    }
+
+    private static void migrateScheduleProfiles(Connection conn) throws SQLException {
+        addColumnIfMissing(conn, "course", "schedule_profile_id", "INTEGER");
+        addColumnIfMissing(conn, "task", "schedule_profile_id", "INTEGER");
+        addColumnIfMissing(conn, "time_block", "schedule_profile_id", "INTEGER");
+
+        long defaultProfileId = ensureDefaultProfile(conn);
+        assignExistingData(conn, defaultProfileId);
+        ensureSingleActiveProfile(conn);
+    }
+
+    private static long ensureDefaultProfile(Connection conn) throws SQLException {
+        try (Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery("SELECT id FROM schedule_profile ORDER BY id LIMIT 1")) {
+            if (rs.next()) {
+                return rs.getLong("id");
+            }
+        }
+
+        try (Statement st = conn.createStatement()) {
+            st.executeUpdate("""
+                    INSERT INTO schedule_profile(name, description, is_active, created_at, updated_at)
+                    VALUES ('Default Schedule', 'Imported MVP schedule data', 1, datetime('now'), datetime('now'))
+                    """, Statement.RETURN_GENERATED_KEYS);
+            try (ResultSet keys = st.getGeneratedKeys()) {
+                if (keys.next()) {
+                    return keys.getLong(1);
+                }
+            }
+        }
+        throw new SQLException("Default schedule profile insert succeeded but no generated key returned.");
+    }
+
+    private static void assignExistingData(Connection conn, long defaultProfileId) throws SQLException {
+        try (Statement st = conn.createStatement()) {
+            st.executeUpdate("UPDATE course SET schedule_profile_id = " + defaultProfileId + " WHERE schedule_profile_id IS NULL");
+            st.executeUpdate("UPDATE task SET schedule_profile_id = " + defaultProfileId + " WHERE schedule_profile_id IS NULL");
+            st.executeUpdate("UPDATE time_block SET schedule_profile_id = " + defaultProfileId + " WHERE schedule_profile_id IS NULL");
+        }
+    }
+
+    private static void ensureSingleActiveProfile(Connection conn) throws SQLException {
+        long activeId = -1;
+        try (Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery("SELECT id FROM schedule_profile WHERE is_active = 1 ORDER BY id LIMIT 1")) {
+            if (rs.next()) {
+                activeId = rs.getLong("id");
+            }
+        }
+
+        if (activeId == -1) {
+            try (Statement st = conn.createStatement();
+                 ResultSet rs = st.executeQuery("SELECT id FROM schedule_profile ORDER BY id LIMIT 1")) {
+                if (rs.next()) {
+                    activeId = rs.getLong("id");
+                }
+            }
+        }
+
+        if (activeId != -1) {
+            try (Statement st = conn.createStatement()) {
+                st.executeUpdate("UPDATE schedule_profile SET is_active = CASE WHEN id = " + activeId + " THEN 1 ELSE 0 END");
+            }
         }
     }
 
@@ -130,6 +214,7 @@ public class Migrations {
             st.executeUpdate("""
                     CREATE TABLE course_mvp (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        schedule_profile_id INTEGER,
                         code TEXT NOT NULL,
                         name TEXT NOT NULL,
                         instructor TEXT,
@@ -141,8 +226,8 @@ public class Migrations {
                     )
                     """);
             st.executeUpdate("""
-                    INSERT INTO course_mvp(id, code, name, instructor, location_text, color_hex, notes, created_at, updated_at)
-                    SELECT id, code, name, NULL, NULL, %s, NULL, datetime('now'), datetime('now')
+                    INSERT INTO course_mvp(id, schedule_profile_id, code, name, instructor, location_text, color_hex, notes, created_at, updated_at)
+                    SELECT id, NULL, code, name, NULL, NULL, %s, NULL, datetime('now'), datetime('now')
                     FROM course
                     """.formatted(colorExpression));
             st.executeUpdate("DROP TABLE course");
