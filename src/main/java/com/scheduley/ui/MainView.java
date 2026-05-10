@@ -20,6 +20,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
@@ -102,7 +103,9 @@ public class MainView extends BorderPane {
         Label label = new Label("Schedule:");
         label.getStyleClass().add("app-subtitle");
         scheduleSelector.setItems(scheduleProfilesViewModel.profiles());
-        scheduleSelector.setPrefWidth(240);
+        scheduleSelector.getStyleClass().add("schedule-selector");
+        scheduleSelector.setCellFactory(list -> new ScheduleProfileCell());
+        scheduleSelector.setButtonCell(new ScheduleProfileCell());
         scheduleSelector.valueProperty().addListener((obs, old, selected) -> {
             if (syncingScheduleSelector || selected == null) {
                 return;
@@ -118,6 +121,7 @@ public class MainView extends BorderPane {
         manage.setOnAction(event -> new ScheduleProfilesDialog(scheduleProfilesViewModel, this::reloadAll).showAndWait());
 
         HBox toolbar = new HBox(8, label, scheduleSelector, manage);
+        toolbar.getStyleClass().add("schedule-toolbar");
         toolbar.setAlignment(Pos.CENTER_LEFT);
         return toolbar;
     }
@@ -129,6 +133,14 @@ public class MainView extends BorderPane {
             scheduleSelector.setValue(scheduleProfilesViewModel.getActiveProfile());
         } finally {
             syncingScheduleSelector = false;
+        }
+    }
+
+    private static final class ScheduleProfileCell extends ListCell<ScheduleProfile> {
+        @Override
+        protected void updateItem(ScheduleProfile profile, boolean empty) {
+            super.updateItem(profile, empty);
+            setText(empty || profile == null ? null : profile.getName() + (profile.isActive() ? " (Active)" : ""));
         }
     }
 }

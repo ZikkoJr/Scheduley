@@ -158,6 +158,9 @@ public class DayView extends BorderPane {
         dayPane.getStyleClass().add("calendar-day-pane");
         addHourLines(dayPane, startHour, endHour);
         addBlocks(dayPane, blocks, startMinute, endMinute, minuteHeight);
+        if (blocks.isEmpty()) {
+            addEmptyState(dayPane, "This day is empty. Add a course, task, or time block to get started.");
+        }
         addCurrentTimeIndicator(dayPane, startMinute, endMinute, minuteHeight);
 
         dayColumn.getChildren().add(dayPane);
@@ -342,6 +345,16 @@ public class DayView extends BorderPane {
             line.setLayoutY((hour - startHour) * HOUR_HEIGHT);
             pane.getChildren().add(line);
         }
+    }
+
+    private void addEmptyState(Pane pane, String message) {
+        Label empty = new Label(message);
+        empty.getStyleClass().add("empty-state");
+        empty.setWrapText(true);
+        empty.setMaxWidth(DAY_WIDTH - 40);
+        empty.setLayoutX(20);
+        empty.setLayoutY(24);
+        pane.getChildren().add(empty);
     }
 
     private Label headerLabel(String text) {

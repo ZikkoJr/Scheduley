@@ -5,8 +5,10 @@ import com.scheduley.util.ValidationUtils;
 import com.scheduley.viewmodel.CoursesViewModel;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
@@ -44,8 +46,23 @@ public class CoursesView extends BorderPane {
         location.setCellValueFactory(data -> new SimpleStringProperty(nullToEmpty(data.getValue().getLocationText())));
         TableColumn<Course, String> color = new TableColumn<>("Color");
         color.setCellValueFactory(data -> new SimpleStringProperty(nullToEmpty(data.getValue().getColorHex())));
+        color.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String hex, boolean empty) {
+                super.updateItem(hex, empty);
+                if (empty || hex == null || hex.isBlank()) {
+                    setText(null);
+                    setGraphic(null);
+                    return;
+                }
+                setText(ColorChoice.displayText(hex));
+                setGraphic(ColorChoice.swatch(hex));
+                setAlignment(Pos.CENTER_LEFT);
+            }
+        });
         table.getColumns().addAll(code, name, instructor, location, color);
         table.setItems(viewModel.courses());
+        table.setPlaceholder(new Label("No courses yet. Add a course to start building this schedule."));
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
         add.setOnAction(event -> openDialog(null));

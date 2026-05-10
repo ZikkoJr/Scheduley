@@ -52,7 +52,8 @@
 
 .app-subtitle,
 .muted-label,
-.hour-label {
+.hour-label,
+.empty-state {
     -fx-text-fill: -app-muted;
 }
 
@@ -82,6 +83,15 @@
 
 .button:hover {
     -fx-background-color: -app-control-hover;
+}
+
+.schedule-toolbar {
+    -fx-spacing: 10;
+    -fx-alignment: center-left;
+}
+
+.schedule-selector {
+    -fx-pref-width: 250;
 }
 
 .text-field,
@@ -120,6 +130,27 @@
 .combo-box-popup .list-view .list-cell:hover,
 .combo-box-popup .list-view .list-cell:selected {
     -fx-background-color: -app-selection;
+}
+
+.dialog-pane {
+    -fx-background-color: -app-bg;
+}
+
+.dialog-pane .header-panel {
+    -fx-background-color: -app-surface-alt;
+    -fx-border-color: transparent transparent -app-border transparent;
+    -fx-padding: 14 18;
+}
+
+.dialog-pane .header-panel .label {
+    -fx-text-fill: -app-text;
+    -fx-font-weight: 700;
+}
+
+.dialog-pane .content,
+.dialog-pane .content.label,
+.dialog-pane .button-bar {
+    -fx-background-color: -app-bg;
 }
 
 .tab-pane {
@@ -166,6 +197,56 @@
 .table-row-cell:selected,
 .table-row-cell:selected .table-cell {
     -fx-background-color: -app-selection;
+}
+
+.table-view .placeholder .label {
+    -fx-text-fill: -app-muted;
+}
+
+.list-view {
+    -fx-background-color: -app-surface;
+    -fx-control-inner-background: -app-surface;
+    -fx-border-color: -app-border;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+}
+
+.list-cell {
+    -fx-background-color: -app-surface;
+    -fx-text-fill: -app-text;
+    -fx-padding: 8 10;
+}
+
+.list-cell:filled:hover {
+    -fx-background-color: -app-control-hover;
+}
+
+.list-cell:filled:selected,
+.list-cell:filled:selected .label {
+    -fx-background-color: -app-selection;
+    -fx-text-fill: -app-text;
+}
+
+.list-cell:filled:selected .active-pill {
+    -fx-text-fill: white;
+}
+
+.active-schedule-cell {
+    -fx-font-weight: 700;
+}
+
+.active-pill {
+    -fx-background-color: -app-accent;
+    -fx-text-fill: white;
+    -fx-background-radius: 999;
+    -fx-padding: 2 8;
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+}
+
+.dialog-actions {
+    -fx-spacing: 8;
+    -fx-alignment: center-left;
 }
 
 .scroll-pane,

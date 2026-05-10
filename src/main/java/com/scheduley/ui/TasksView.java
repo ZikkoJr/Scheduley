@@ -53,6 +53,7 @@ public class TasksView extends BorderPane {
         status.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getStatus()));
         table.getColumns().addAll(taskTitle, course, due, priority, status);
         table.setItems(tasksViewModel.tasks());
+        table.setPlaceholder(new Label("No tasks yet. Add a task to keep this schedule on track."));
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
         add.setOnAction(event -> openDialog(null));

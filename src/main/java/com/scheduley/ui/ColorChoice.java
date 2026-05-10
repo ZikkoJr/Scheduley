@@ -1,9 +1,7 @@
 package com.scheduley.ui;
 
-import javafx.geometry.Pos;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListCell;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 
 import java.util.List;
@@ -51,6 +49,26 @@ record ColorChoice(String name, String hex) {
         comboBox.setValue(choice);
     }
 
+    static String displayText(String hex) {
+        String normalized = normalize(hex);
+        ColorChoice choice = findByHex(normalized);
+        return (choice == null ? "Saved color" : choice.name()) + "  " + normalized;
+    }
+
+    static Region swatch(String hex) {
+        Region swatch = new Region();
+        swatch.setPrefSize(18, 18);
+        swatch.setMinSize(18, 18);
+        swatch.setMaxSize(18, 18);
+        swatch.setStyle("""
+                -fx-background-color: %s;
+                -fx-border-color: rgba(0,0,0,0.25);
+                -fx-border-radius: 4;
+                -fx-background-radius: 4;
+                """.formatted(normalize(hex)));
+        return swatch;
+    }
+
     private static ColorChoice findByHex(String hex) {
         return PRESETS.stream()
                 .filter(choice -> choice.hex().equalsIgnoreCase(hex))
@@ -76,22 +94,6 @@ record ColorChoice(String name, String hex) {
             }
             setText(item.name() + "  " + item.hex());
             setGraphic(swatch(item.hex()));
-        }
-
-        private Region swatch(String hex) {
-            Region swatch = new Region();
-            swatch.setPrefSize(18, 18);
-            swatch.setMinSize(18, 18);
-            swatch.setMaxSize(18, 18);
-            swatch.setStyle("""
-                    -fx-background-color: %s;
-                    -fx-border-color: rgba(0,0,0,0.25);
-                    -fx-border-radius: 4;
-                    -fx-background-radius: 4;
-                    """.formatted(hex));
-            HBox wrapper = new HBox(swatch);
-            wrapper.setAlignment(Pos.CENTER);
-            return wrapper;
         }
     }
 }

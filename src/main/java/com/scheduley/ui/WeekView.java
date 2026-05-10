@@ -99,6 +99,7 @@ public class WeekView extends BorderPane {
         calendar.getChildren().add(timeGutter);
 
         Map<Integer, Pane> dayPanes = new HashMap<>();
+        Pane firstDayPane = null;
         for (int day : orderedDays(settings.getWeekStartDay())) {
             VBox column = new VBox();
             column.setPrefWidth(DAY_WIDTH);
@@ -112,6 +113,13 @@ public class WeekView extends BorderPane {
             column.getChildren().add(pane);
             calendar.getChildren().add(column);
             dayPanes.put(day, pane);
+            if (firstDayPane == null) {
+                firstDayPane = pane;
+            }
+        }
+
+        if (weekViewModel.timeBlocks().isEmpty() && firstDayPane != null) {
+            addEmptyState(firstDayPane, "This schedule is empty. Add a course, task, or time block to get started.");
         }
 
         for (TimeBlock block : weekViewModel.timeBlocks()) {
@@ -219,6 +227,16 @@ public class WeekView extends BorderPane {
             line.setLayoutY((hour - startHour) * HOUR_HEIGHT);
             pane.getChildren().add(line);
         }
+    }
+
+    private void addEmptyState(Pane pane, String message) {
+        Label empty = new Label(message);
+        empty.getStyleClass().add("empty-state");
+        empty.setWrapText(true);
+        empty.setMaxWidth(DAY_WIDTH - 24);
+        empty.setLayoutX(12);
+        empty.setLayoutY(18);
+        pane.getChildren().add(empty);
     }
 
     private Label headerLabel(String text) {
