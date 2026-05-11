@@ -12,6 +12,8 @@ import com.scheduley.dao.sqlite.SqliteTaskDAO;
 import com.scheduley.dao.sqlite.SqliteTimeBlockDAO;
 import com.scheduley.models.ScheduleProfile;
 import com.scheduley.service.ScheduleExportService;
+import com.scheduley.service.ScheduleImportResult;
+import com.scheduley.service.ScheduleImportService;
 import com.scheduley.viewmodel.CoursesViewModel;
 import com.scheduley.viewmodel.ScheduleProfilesViewModel;
 import com.scheduley.viewmodel.TasksViewModel;
@@ -36,6 +38,7 @@ import java.util.Locale;
 public class MainView extends BorderPane {
     private final SettingsDAO settingsDAO;
     private final ScheduleExportService scheduleExportService;
+    private final ScheduleImportService scheduleImportService;
     private final ScheduleProfilesViewModel scheduleProfilesViewModel;
     private final CoursesViewModel coursesViewModel;
     private final TasksViewModel tasksViewModel;
@@ -50,6 +53,7 @@ public class MainView extends BorderPane {
         TimeBlockDAO timeBlockDAO = new SqliteTimeBlockDAO();
         settingsDAO = new SqliteSettingsDAO();
         scheduleExportService = new ScheduleExportService(courseDAO, taskDAO, timeBlockDAO);
+        scheduleImportService = new ScheduleImportService(scheduleProfileDAO, courseDAO, taskDAO, timeBlockDAO);
 
         scheduleProfilesViewModel = new ScheduleProfilesViewModel(scheduleProfileDAO);
         scheduleProfilesViewModel.reload();
@@ -131,7 +135,10 @@ public class MainView extends BorderPane {
         Button export = new Button("Export Current Schedule");
         export.setOnAction(event -> exportCurrentSchedule());
 
-        HBox toolbar = new HBox(8, label, scheduleSelector, manage, export);
+        Button importSchedule = new Button("Import Schedule from JSON");
+        importSchedule.setOnAction(event -> importScheduleFromJson());
+
+        HBox toolbar = new HBox(8, label, scheduleSelector, manage, export, importSchedule);
         toolbar.getStyleClass().add("schedule-toolbar");
         toolbar.setAlignment(Pos.CENTER_LEFT);
         return toolbar;
@@ -159,6 +166,30 @@ public class MainView extends BorderPane {
             UiUtils.showInfo("Schedule exported", "Exported " + activeProfile.getName() + " to " + destination.toAbsolutePath() + ".");
         } catch (RuntimeException e) {
             UiUtils.showError("Could not export schedule", e);
+        }
+    }
+
+    private void importScheduleFromJson() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Import Schedule from JSON");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON files", "*.json"));
+        File selectedFile = fileChooser.showOpenDialog(getScene() == null ? null : getScene().getWindow());
+        if (selectedFile == null) {
+            return;
+        }
+
+        try {
+            ScheduleImportResult result = scheduleImportService.importFromJsonFile(selectedFile.toPath());
+            reloadAll();
+            UiUtils.showInfo(
+                    "Schedule imported",
+                    "Imported and activated " + result.scheduleProfile().getName() + ".\n"
+                            + result.courseCount() + " courses, "
+                            + result.taskCount() + " tasks, "
+                            + result.timeBlockCount() + " time blocks."
+            );
+        } catch (RuntimeException e) {
+            UiUtils.showError("Could not import schedule", e);
         }
     }
 

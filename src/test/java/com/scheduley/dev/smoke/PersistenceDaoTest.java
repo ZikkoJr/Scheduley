@@ -16,6 +16,8 @@ import com.scheduley.models.ScheduleProfile;
 import com.scheduley.models.Task;
 import com.scheduley.models.TimeBlock;
 import com.scheduley.service.ScheduleExportService;
+import com.scheduley.service.ScheduleImportResult;
+import com.scheduley.service.ScheduleImportService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,6 +33,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -241,6 +244,58 @@ class PersistenceDaoTest {
         assertEquals(1, exportData.timeBlocks().size());
         assertEquals(fallBlock.getId(), exportData.timeBlocks().getFirst().getId());
         assertTrue(exportService.toJson(exportData).contains("\"format\": \"scheduley-schedule-export\""));
+    }
+
+    @Test
+    void scheduleImportCreatesNewProfileAndRemapsRelationships() throws Exception {
+        Course sourceCourse = courseDAO.create(
+                new Course("CS401", "Distributed Systems", "Dr. Lamport", "Lab 4", "#2563EB", null),
+                activeProfileId
+        );
+        Task sourceTask = taskDAO.create(
+                new Task("Design review", sourceCourse.getId(), "2026-05-22", 75, "HIGH", "IN_PROGRESS", "Prepare diagrams"),
+                activeProfileId
+        );
+        TimeBlock sourceBlock = timeBlockDAO.create(
+                new TimeBlock("Design review", "TASK", sourceCourse.getId(), sourceTask.getId(), 3, null, 840, 915, "Library", "#2563EB", null),
+                activeProfileId
+        );
+        ScheduleExportService exportService = new ScheduleExportService(courseDAO, taskDAO, timeBlockDAO);
+        ScheduleExportData exportData = exportService.buildExportData(scheduleProfileDAO.findActive().orElseThrow());
+
+        Path exportPath = dbPath.getParent().resolve("schedule-export-" + System.nanoTime() + ".json");
+        try {
+            Files.writeString(exportPath, exportService.toJson(exportData));
+
+            ScheduleImportService importService = new ScheduleImportService(scheduleProfileDAO, courseDAO, taskDAO, timeBlockDAO);
+            ScheduleImportResult result = importService.importFromJsonFile(exportPath);
+            Long importedProfileId = result.scheduleProfile().getId();
+
+            assertNotEquals(activeProfileId, importedProfileId);
+            assertEquals(importedProfileId, scheduleProfileDAO.findActive().orElseThrow().getId());
+            assertEquals(1, courseDAO.findAll(activeProfileId).size());
+            assertEquals(sourceCourse.getId(), courseDAO.findAll(activeProfileId).getFirst().getId());
+            assertEquals(1, taskDAO.findAll(activeProfileId).size());
+            assertEquals(sourceTask.getId(), taskDAO.findAll(activeProfileId).getFirst().getId());
+            assertEquals(1, timeBlockDAO.findAll(activeProfileId).size());
+            assertEquals(sourceBlock.getId(), timeBlockDAO.findAll(activeProfileId).getFirst().getId());
+
+            Course importedCourse = courseDAO.findAll(importedProfileId).getFirst();
+            Task importedTask = taskDAO.findAll(importedProfileId).getFirst();
+            TimeBlock importedBlock = timeBlockDAO.findAll(importedProfileId).getFirst();
+            assertEquals("Imported - Default Schedule", result.scheduleProfile().getName());
+            assertNotEquals(sourceCourse.getId(), importedCourse.getId());
+            assertNotEquals(sourceTask.getId(), importedTask.getId());
+            assertNotEquals(sourceBlock.getId(), importedBlock.getId());
+            assertEquals(importedCourse.getId(), importedTask.getCourseId());
+            assertEquals(importedCourse.getId(), importedBlock.getCourseId());
+            assertEquals(importedTask.getId(), importedBlock.getTaskId());
+            assertEquals(1, result.courseCount());
+            assertEquals(1, result.taskCount());
+            assertEquals(1, result.timeBlockCount());
+        } finally {
+            Files.deleteIfExists(exportPath);
+        }
     }
 
     @Test
