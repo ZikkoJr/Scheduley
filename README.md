@@ -4,7 +4,7 @@ Scheduley is a local-first JavaFX desktop app that helps students organize cours
 
 ## Overview
 
-Scheduley is built as a practical desktop scheduling tool for students who want a simple, private way to plan their week. The app opens directly into a weekly calendar, stores data locally in SQLite, and keeps the core workflow focused on courses, tasks, and scheduled time blocks.
+Scheduley is built as a practical desktop scheduling tool for students who want a simple, private way to plan their week. The app opens directly into a weekly calendar, stores data locally in SQLite, and keeps the core workflow focused on schedule profiles, courses, tasks, and scheduled time blocks.
 
 The project is intentionally scoped as an MVP: it demonstrates JavaFX UI development, SQLite-backed persistence, DAO-based data access, validation, and a layered desktop application structure without relying on cloud services.
 
@@ -16,6 +16,10 @@ Student schedules often mix classes, work shifts, study time, assignments, and p
 
 - Weekly calendar with Monday-Sunday columns and vertical time positioning
 - Day View for today's schedule, current activity, upcoming blocks, and a moving current-time bar
+- Multiple saved schedule profiles for separating different terms, routines, or planning scenarios
+- Active schedule selector for switching the currently displayed schedule
+- Manage Schedules dialog for creating, editing, activating, and deleting schedule profiles
+- Courses, tasks, and time blocks scoped to the active schedule profile
 - Course CRUD with code, name, instructor, location, color, and notes
 - Task CRUD with optional course link, due date, estimated minutes, priority, status, and notes
 - Time block CRUD for `COURSE`, `WORK`, `STUDY`, `TASK`, and `CUSTOM` blocks
@@ -64,14 +68,14 @@ Scheduley uses a layered structure to keep UI, application state, and persistenc
 Core packages:
 
 - `com.scheduley.db`: SQLite connection and database migrations
-- `com.scheduley.models`: Course, task, time block, and settings models
-- `com.scheduley.dao`: DAO interfaces for persistence operations
-- `com.scheduley.dao.sqlite`: SQLite DAO implementations
+- `com.scheduley.models`: Course, task, time block, schedule profile, and settings models
+- `com.scheduley.dao`: DAO interfaces for persistence operations, including `ScheduleProfileDAO`
+- `com.scheduley.dao.sqlite`: SQLite DAO implementations, including `SqliteScheduleProfileDAO`
 - `com.scheduley.viewmodel`: JavaFX-facing state loading and saving
 - `com.scheduley.ui`: JavaFX views and dialogs
 - `com.scheduley.util`: time formatting, parsing, and validation helpers
 
-SQL is kept out of UI classes. JavaFX views call view models and DAOs for persistence, which keeps the app easier to test and extend.
+SQL is kept out of UI classes. JavaFX views call view models and DAOs for persistence, which keeps the app easier to test and extend. Schedule-aware view models pass the active schedule profile id into DAO methods so course, task, and time block queries stay scoped to the selected schedule.
 
 ## Database Design
 
@@ -79,12 +83,13 @@ Scheduley stores data in a local SQLite database. Migrations create the core tab
 
 Main tables:
 
+- `schedule_profile`: saved schedules with a name, description, active flag, and timestamps
 - `course`: course code, name, instructor, location, color, notes, and timestamps
 - `task`: task title, optional course relationship, due date, estimate, priority, status, notes, and timestamps
 - `time_block`: scheduled blocks for courses, tasks, work, study, and custom events
 - `app_settings`: persisted user preferences for calendar display and theme
 
-The schema uses foreign keys to keep related records consistent. Tasks can be linked to courses, and time blocks can reference courses or tasks. Time block constraints validate minute ranges and day-of-week values.
+The schema uses foreign keys to keep related records consistent. Course, task, and time block records are linked to schedule profiles, and Scheduley only displays data for the currently active schedule profile. Tasks can be linked to courses, and time blocks can reference courses or tasks. Time block constraints validate minute ranges and day-of-week values.
 
 ## How to Run
 
