@@ -98,7 +98,13 @@ Requirements:
 - JDK 21
 - Maven
 
-Run the app:
+Option 1: Windows launcher
+
+Double-click `Run Scheduley.bat` from the project folder. The launcher runs from its own directory, prints a short launch message, and starts the app with Maven.
+
+Option 2: Manual Maven command
+
+From the project folder, run:
 
 ```powershell
 mvn javafx:run
