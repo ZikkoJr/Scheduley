@@ -11,6 +11,7 @@ import com.scheduley.dao.sqlite.SqliteSettingsDAO;
 import com.scheduley.dao.sqlite.SqliteTaskDAO;
 import com.scheduley.dao.sqlite.SqliteTimeBlockDAO;
 import com.scheduley.models.ScheduleProfile;
+import com.scheduley.service.ScheduleExportService;
 import com.scheduley.viewmodel.CoursesViewModel;
 import com.scheduley.viewmodel.ScheduleProfilesViewModel;
 import com.scheduley.viewmodel.TasksViewModel;
@@ -23,12 +24,18 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.stage.FileChooser;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.util.Locale;
+
 public class MainView extends BorderPane {
     private final SettingsDAO settingsDAO;
+    private final ScheduleExportService scheduleExportService;
     private final ScheduleProfilesViewModel scheduleProfilesViewModel;
     private final CoursesViewModel coursesViewModel;
     private final TasksViewModel tasksViewModel;
@@ -42,6 +49,7 @@ public class MainView extends BorderPane {
         TaskDAO taskDAO = new SqliteTaskDAO();
         TimeBlockDAO timeBlockDAO = new SqliteTimeBlockDAO();
         settingsDAO = new SqliteSettingsDAO();
+        scheduleExportService = new ScheduleExportService(courseDAO, taskDAO, timeBlockDAO);
 
         scheduleProfilesViewModel = new ScheduleProfilesViewModel(scheduleProfileDAO);
         scheduleProfilesViewModel.reload();
@@ -120,10 +128,55 @@ public class MainView extends BorderPane {
         Button manage = new Button("Manage Schedules");
         manage.setOnAction(event -> new ScheduleProfilesDialog(scheduleProfilesViewModel, this::reloadAll).showAndWait());
 
-        HBox toolbar = new HBox(8, label, scheduleSelector, manage);
+        Button export = new Button("Export Current Schedule");
+        export.setOnAction(event -> exportCurrentSchedule());
+
+        HBox toolbar = new HBox(8, label, scheduleSelector, manage, export);
         toolbar.getStyleClass().add("schedule-toolbar");
         toolbar.setAlignment(Pos.CENTER_LEFT);
         return toolbar;
+    }
+
+    private void exportCurrentSchedule() {
+        ScheduleProfile activeProfile = scheduleProfilesViewModel.getActiveProfile();
+        if (activeProfile == null || activeProfile.getId() == null) {
+            UiUtils.showError("Could not export schedule", new IllegalStateException("No active schedule profile is selected."));
+            return;
+        }
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Export Current Schedule");
+        fileChooser.setInitialFileName(defaultExportFileName(activeProfile));
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON files", "*.json"));
+        File selectedFile = fileChooser.showSaveDialog(getScene() == null ? null : getScene().getWindow());
+        if (selectedFile == null) {
+            return;
+        }
+
+        Path destination = ensureJsonExtension(selectedFile.toPath());
+        try {
+            scheduleExportService.exportToJsonFile(activeProfile, destination);
+            UiUtils.showInfo("Schedule exported", "Exported " + activeProfile.getName() + " to " + destination.toAbsolutePath() + ".");
+        } catch (RuntimeException e) {
+            UiUtils.showError("Could not export schedule", e);
+        }
+    }
+
+    private static Path ensureJsonExtension(Path path) {
+        String fileName = path.getFileName().toString();
+        if (fileName.toLowerCase(Locale.ROOT).endsWith(".json")) {
+            return path;
+        }
+        return path.resolveSibling(fileName + ".json");
+    }
+
+    private static String defaultExportFileName(ScheduleProfile profile) {
+        String name = profile.getName() == null || profile.getName().isBlank() ? "schedule" : profile.getName();
+        String safeName = name.trim()
+                .toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("^-|-$", "");
+        return (safeName.isBlank() ? "schedule" : safeName) + "-export.json";
     }
 
     private void syncScheduleSelector() {

@@ -10,10 +10,12 @@ import com.scheduley.dao.sqlite.SqliteTaskDAO;
 import com.scheduley.dao.sqlite.SqliteTimeBlockDAO;
 import com.scheduley.db.ConnectDB;
 import com.scheduley.db.Migrations;
+import com.scheduley.export.ScheduleExportData;
 import com.scheduley.models.Course;
 import com.scheduley.models.ScheduleProfile;
 import com.scheduley.models.Task;
 import com.scheduley.models.TimeBlock;
+import com.scheduley.service.ScheduleExportService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -202,6 +204,43 @@ class PersistenceDaoTest {
         assertEquals(1, courseDAO.findAll(fall.getId()).size());
         assertEquals(fallCourse.getId(), courseDAO.findAll(fall.getId()).getFirst().getId());
         assertTrue(courseDAO.findById(fallCourse.getId(), activeProfileId).isEmpty());
+    }
+
+    @Test
+    void scheduleExportIncludesOnlyActiveScheduleData() {
+        courseDAO.create(
+                new Course("HIST100", "History", "Dr. Morgan", "A101", "#2563EB", null),
+                activeProfileId
+        );
+
+        ScheduleProfile fall = scheduleProfileDAO.create(new ScheduleProfile("Fall 2026", "Test export profile"));
+        scheduleProfileDAO.setActiveProfile(fall.getId());
+        Course fallCourse = courseDAO.create(
+                new Course("CS301", "Algorithms", "Dr. Knuth", "B202", "#7C3AED", null),
+                fall.getId()
+        );
+        Task fallTask = taskDAO.create(
+                new Task("Project", fallCourse.getId(), "2026-05-20", 120, "HIGH", "NOT_STARTED", null),
+                fall.getId()
+        );
+        TimeBlock fallBlock = timeBlockDAO.create(
+                new TimeBlock("Algorithms", "COURSE", fallCourse.getId(), null, 1, null, 540, 600, "B202", "#7C3AED", null),
+                fall.getId()
+        );
+
+        ScheduleExportService exportService = new ScheduleExportService(courseDAO, taskDAO, timeBlockDAO);
+        ScheduleExportData exportData = exportService.buildExportData(scheduleProfileDAO.findActive().orElseThrow());
+
+        assertEquals("scheduley-schedule-export", exportData.format());
+        assertEquals(1, exportData.version());
+        assertEquals(fall.getId(), exportData.scheduleProfile().id());
+        assertEquals(1, exportData.courses().size());
+        assertEquals(fallCourse.getId(), exportData.courses().getFirst().getId());
+        assertEquals(1, exportData.tasks().size());
+        assertEquals(fallTask.getId(), exportData.tasks().getFirst().getId());
+        assertEquals(1, exportData.timeBlocks().size());
+        assertEquals(fallBlock.getId(), exportData.timeBlocks().getFirst().getId());
+        assertTrue(exportService.toJson(exportData).contains("\"format\": \"scheduley-schedule-export\""));
     }
 
     @Test

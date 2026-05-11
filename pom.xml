@@ -19,6 +19,7 @@
         <sqlite.version>3.45.3.0</sqlite.version>
         <slf4j.version>2.0.13</slf4j.version>
         <logback.version>1.5.13</logback.version>
+        <gson.version>2.11.0</gson.version>
         <junit.version>5.10.2</junit.version>
     </properties>
 
@@ -69,6 +70,13 @@
             <artifactId>logback-classic</artifactId>
             <version>${logback.version}</version>
             <scope>runtime</scope>
+        </dependency>
+
+        <!-- JSON export. Gson keeps this local-file feature lightweight without pulling in a larger stack. -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>${gson.version}</version>
         </dependency>
 
         <!-- Tests -->
